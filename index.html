@@ -1088,12 +1088,12 @@
 
     function updateVisitorCount() {
       // 使用免費無個資疑慮的 counterapi.dev 紀錄與顯示累積遊玩次數 (專案：elena0624-color-walk)
-      fetch('https://api.counterapi.dev/v1/projects/elena0624-color-walk/counters/visits/up')
+      fetch('https://api.counterapi.dev/v1/elena0624-color-walk/visits/up')
         .then(response => response.json())
         .then(data => {
-          if (data && data.value) {
+          if (data && data.count) {
             const badge = document.getElementById('visitor-count-badge');
-            badge.innerHTML = `🔥 全球累計遊玩：${data.value} 次`;
+            badge.innerHTML = `🔥 全球累計遊玩：${data.count} 次`;
             badge.style.display = 'inline-flex';
           }
         })
