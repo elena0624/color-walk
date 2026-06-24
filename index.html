@@ -741,9 +741,12 @@
             ➕ 新增自訂色票 (點擊展開)
           </summary>
           <div style="display: flex; gap: 8px; flex-direction: column; margin-top: 10px;">
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
               <div class="color-picker-wrapper">
-                <input type="color" id="new-color-hex" value="#FF5E7E" class="color-picker-input">
+                <input type="color" id="new-color-hex" value="#FF5E7E" class="color-picker-input" oninput="syncColorPickerToText()">
+              </div>
+              <div style="position: relative; width: 90px; display: flex; align-items: center;">
+                <input type="text" id="new-color-hex-text" value="#FF5E7E" class="text-input" style="padding: 10px 6px; width: 100%; text-align: center; font-family: monospace; font-size: 0.85rem;" oninput="syncColorTextToPicker()">
               </div>
               <div style="position: relative; flex: 1; display: flex; align-items: center;">
                 <input type="text" id="new-color-name" value="自訂色" class="text-input" style="padding: 10px 36px 10px 10px; width: 100%;" oninput="toggleClearButton('new-color-name', 'btn-clear-color-name')">
@@ -1201,6 +1204,7 @@
       const nameInput = document.getElementById('new-color-name');
       const descInput = document.getElementById('new-color-desc');
       const hexInput = document.getElementById('new-color-hex');
+      const hexTextInput = document.getElementById('new-color-hex-text');
       
       const customCount = activeColors.filter(c => c.name.startsWith('自訂色')).length;
       const defaultName = customCount > 0 ? `自訂色 ${customCount + 1}` : '自訂色';
@@ -1208,6 +1212,7 @@
       nameInput.value = defaultName;
       descInput.value = '同色系景物或隨身小物';
       hexInput.value = '#FF5E7E';
+      if (hexTextInput) hexTextInput.value = '#FF5E7E';
       
       toggleClearButton('new-color-name', 'btn-clear-color-name');
       toggleClearButton('new-color-desc', 'btn-clear-color-desc');
@@ -1332,10 +1337,23 @@
 
     function addNewColor() {
       const hexInput = document.getElementById('new-color-hex');
+      const hexTextInput = document.getElementById('new-color-hex-text');
       const nameInput = document.getElementById('new-color-name');
       const descInput = document.getElementById('new-color-desc');
 
-      const hex = hexInput.value;
+      let hex = hexTextInput ? hexTextInput.value.trim() : hexInput.value;
+      if (hex && !hex.startsWith('#')) {
+        hex = '#' + hex;
+      }
+
+      // 驗證色號格式
+      const hexReg = /^#[0-9A-Fa-f]{6}$/;
+      if (!hexReg.test(hex)) {
+        alert('請輸入正確的 6 碼網頁色號（例如：#FF5E7E）！');
+        if (hexTextInput) hexTextInput.focus();
+        return;
+      }
+
       const name = nameInput.value.trim();
       const desc = descInput.value.trim();
 
@@ -1368,6 +1386,30 @@
 
       // 重設自訂色彩輸入欄位為下一個預設值
       resetColorInputs();
+    }
+
+    function syncColorPickerToText() {
+      const hexInput = document.getElementById('new-color-hex');
+      const hexTextInput = document.getElementById('new-color-hex-text');
+      if (hexInput && hexTextInput) {
+        hexTextInput.value = hexInput.value.toUpperCase();
+      }
+    }
+
+    function syncColorTextToPicker() {
+      const hexInput = document.getElementById('new-color-hex');
+      const hexTextInput = document.getElementById('new-color-hex-text');
+      if (hexInput && hexTextInput) {
+        let hex = hexTextInput.value.trim();
+        if (hex && !hex.startsWith('#')) {
+          hex = '#' + hex;
+        }
+        // 如果輸入符合 6 碼色號格式，則即時更新左邊調色盤的預覽
+        const hexReg = /^#[0-9A-Fa-f]{6}$/;
+        if (hexReg.test(hex)) {
+          hexInput.value = hex.toLowerCase();
+        }
+      }
     }
 
     function validateColorsSetup() {
