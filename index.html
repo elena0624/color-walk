@@ -661,7 +661,7 @@
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      z-index: 99;
+      z-index: 999;
     }
 
     footer {
@@ -682,20 +682,85 @@
       <div class="subtitle" id="app-subtitle">自訂人數與色票的旅遊挑戰盤</div>
     </header>
 
-    <!-- ==================== 1. 設定面板畫面 (Setup Screen) ==================== -->
-    <div id="screen-setup" class="screen">
+    <!-- ==================== 1A. 自訂色彩與目的地設定 (Colors Setup Screen) ==================== -->
+    <div id="screen-setup-colors" class="screen">
+      <!-- 旅遊目的地與色彩管理（通用核心設定） -->
       <div class="glass-panel">
         <!-- 地點設定 -->
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 15px;">
           <label for="input-location">🗺️ 旅遊目的地（可不填）</label>
           <div style="position: relative; display: flex; align-items: center;">
             <input type="text" id="input-location" placeholder="例如：台南、沖繩、東京..." class="text-input" style="padding-right: 36px;" oninput="updateLocationTitle()">
-            <span id="btn-clear-location" onclick="clearLocationInput()" style="position: absolute; right: 12px; color: var(--text-muted); cursor: pointer; display: none; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
+            <span id="btn-clear-location" onclick="clearLocationInput()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; display: none; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
           </div>
         </div>
 
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 15px;">
+          <span>🎨 抽籤色彩池（可自由增刪）</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;" id="color-pool-count">0色</span>
+        </h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+          此色彩池將用於首頁的「自由轉盤」與「多人抽卡」。
+        </p>
+
+        <!-- 快捷主題選擇 -->
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">主題套用：</span>
+          <button class="theme-preset-btn" onclick="applyTheme('classic')">🌈 經典高對比</button>
+          <button class="theme-preset-btn" onclick="applyTheme('macau')">🇲🇴 澳門特調</button>
+          <button class="theme-preset-btn" onclick="applyTheme('morandi')">🎨 莫蘭迪色</button>
+        </div>
+
+        <!-- 當前已選色票 -->
+        <div class="color-pill-container" id="color-pills-wrapper" style="margin-bottom: 10px;">
+          <!-- JS 動態渲染色票 -->
+        </div>
+
+        <!-- 新增色票面板 (預設收折) -->
+        <details id="details-color-setup" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px;">
+          <summary style="font-size: 0.85rem; font-weight: 700; color: #3b82f6; cursor: pointer; outline: none; user-select: none;">
+            ➕ 新增自訂色票 (點擊展開)
+          </summary>
+          <div style="display: flex; gap: 8px; flex-direction: column; margin-top: 10px;">
+            <div style="display: flex; gap: 8px;">
+              <div class="color-picker-wrapper">
+                <input type="color" id="new-color-hex" value="#FF5E7E" class="color-picker-input">
+              </div>
+              <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                <input type="text" id="new-color-name" value="自訂色" class="text-input" style="padding: 10px 36px 10px 10px; width: 100%;" oninput="toggleClearButton('new-color-name', 'btn-clear-color-name')">
+                <span id="btn-clear-color-name" onclick="clearTextInput('new-color-name', 'btn-clear-color-name')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; display: inline; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                <input type="text" id="new-color-desc" value="同色系景物或隨身小物" class="text-input" style="padding: 10px 36px 10px 10px; width: 100%;" oninput="toggleClearButton('new-color-desc', 'btn-clear-color-desc')">
+                <span id="btn-clear-color-desc" onclick="clearTextInput('new-color-desc', 'btn-clear-color-desc')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; display: inline; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
+              </div>
+              <button class="btn-add-color" onclick="addNewColor()">新增</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="glass-panel" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="validation-warning" id="color-setup-warning" style="margin-bottom: 5px; text-align: center;">
+          ⚠️ 警告：當前色彩池沒有任何顏色，請新增顏色或套用主題！
+        </div>
+        <button id="btn-save-colors" class="btn btn-primary" onclick="startWheelMode()">
+          ↩ 保存並返回轉盤
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== 1B. 多人抽卡玩家設定 (Players Setup Screen) ==================== -->
+    <div id="screen-setup-players" class="screen">
+      <div class="glass-panel">
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          👥 多人抽卡玩家設定 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(僅抽卡模式適用)</span>
+        </h3>
+
         <!-- 人數設定 -->
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 15px;">
           <label>👥 玩家人數（2 ~ 10 人）</label>
           <div class="stepper">
             <button class="stepper-btn" onclick="adjustPlayerCount(-1)">-</button>
@@ -715,57 +780,8 @@
             </div>
           </details>
         </div>
-      </div>
 
-      <!-- 客製化色盤管理 -->
-      <div class="glass-panel color-setup-section">
-        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-          <span>🎨 抽籤色彩池（可自由增刪）</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;" id="color-pool-count">0色</span>
-        </h3>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">
-          請確保色池數量大於或等於玩家人數，才能進行不重複抽卡。
-        </p>
-
-        <!-- 快捷主題選擇 -->
-        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px;">
-          <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">主題套用：</span>
-          <button class="theme-preset-btn" onclick="applyTheme('classic')">🌈 經典高對比</button>
-          <button class="theme-preset-btn" onclick="applyTheme('macau')">🇲🇴 澳門特調</button>
-          <button class="theme-preset-btn" onclick="applyTheme('morandi')">🎨 莫蘭迪色</button>
-        </div>
-
-        <!-- 當前已選色票 -->
-        <div class="color-pill-container" id="color-pills-wrapper">
-          <!-- JS 動態渲染色票 -->
-        </div>
-
-        <!-- 新增色票面板 (預設收折) -->
-        <details id="details-color-setup" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; margin-top: 10px;">
-          <summary style="font-size: 0.85rem; font-weight: 700; color: #3b82f6; cursor: pointer; outline: none; user-select: none;">
-            ➕ 新增自訂色票 (點擊展開)
-          </summary>
-          <div style="display: flex; gap: 8px; flex-direction: column; margin-top: 10px;">
-            <div style="display: flex; gap: 8px;">
-              <div class="color-picker-wrapper">
-                <input type="color" id="new-color-hex" value="#FF5E7E" class="color-picker-input">
-              </div>
-              <div style="position: relative; flex: 1; display: flex; align-items: center;">
-                <input type="text" id="new-color-name" value="自訂色" class="text-input" style="padding: 10px 36px 10px 10px; width: 100%;" oninput="toggleClearButton('new-color-name', 'btn-clear-color-name')">
-                <span id="btn-clear-color-name" onclick="clearTextInput('new-color-name', 'btn-clear-color-name')" style="position: absolute; right: 12px; color: var(--text-muted); cursor: pointer; display: inline; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
-              </div>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <div style="position: relative; flex: 1; display: flex; align-items: center;">
-                <input type="text" id="new-color-desc" value="同色系景物或隨身小物" class="text-input" style="padding: 10px 36px 10px 10px; width: 100%;" oninput="toggleClearButton('new-color-desc', 'btn-clear-color-desc')">
-                <span id="btn-clear-color-desc" onclick="clearTextInput('new-color-desc', 'btn-clear-color-desc')" style="position: absolute; right: 12px; color: var(--text-muted); cursor: pointer; display: inline; font-size: 1.1rem; user-select: none; padding: 4px;">✕</span>
-              </div>
-              <button class="btn-add-color" onclick="addNewColor()">新增</button>
-            </div>
-          </div>
-        </details>
-
-        <div class="validation-warning" id="warning-message">
+        <div class="validation-warning" id="warning-message" style="margin-top: 12px; margin-bottom: 0;">
           ⚠️ 警告：當前色彩池的顏色數量小於玩家人數，請新增顏色或減少玩家人數！
         </div>
       </div>
@@ -775,17 +791,12 @@
           🎴 開始不重複抽卡
         </button>
         <button class="btn btn-secondary" onclick="startWheelMode()">
-          ↩ 保存並返回轉盤
+          🏠 返回首頁
         </button>
       </div>
-
-      <!-- 累計遊玩人次標籤 -->
-      <div style="text-align: center; margin-top: 5px;">
-        <span id="visitor-count-badge" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); font-size: 0.72rem; color: #ff9500; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.15); letter-spacing: 0.5px; margin: 0 auto;">
-          🔥 全球累計遊玩：-- 次
-        </span>
-      </div>
     </div>
+
+
 
     <!-- ==================== 2. 抽卡進行畫面 (Card Screen) ==================== -->
     <div id="screen-card" class="screen">
@@ -804,8 +815,7 @@
       </div>
 
       <div style="display: flex; gap: 8px; width: 100%;">
-        <button class="btn btn-secondary" onclick="startWheelMode()" style="flex: 1; padding: 12px 6px; font-size: 0.9rem;">🏠 首頁</button>
-        <button class="btn btn-secondary" onclick="openColorSetup()" style="flex: 1; padding: 12px 6px; font-size: 0.9rem;">⚙️ 設定</button>
+        <button class="btn btn-secondary" onclick="startWheelMode()" style="flex: 1; padding: 12px 6px; font-size: 0.9rem;">🏠 放棄返回首頁</button>
         <button class="btn btn-primary" id="btn-next-player" style="display:none; flex: 1.8; padding: 12px 6px; font-size: 0.9rem;" onclick="nextPlayerTurn()">下一位 ➔</button>
       </div>
     </div>
@@ -825,10 +835,7 @@
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button class="btn btn-accent" onclick="replayCardGame()">🔄 重洗重抽</button>
-        <div style="display: flex; gap: 10px; width: 100%;">
-          <button class="btn btn-secondary" onclick="startWheelMode()" style="flex: 1;">🏠 轉盤首頁</button>
-          <button class="btn btn-secondary" onclick="openColorSetup()" style="flex: 1;">⚙️ 修改設定</button>
-        </div>
+        <button class="btn btn-secondary" onclick="startWheelMode()" style="width: 100%;">🏠 返回首頁</button>
       </div>
     </div>
 
@@ -850,11 +857,11 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 15px;">
-        <button class="btn btn-primary" onclick="startCardGameMode()">
-          🎴 多人輪流抽卡（保證不重複）
+        <button id="btn-go-colors" class="btn btn-primary" onclick="openColorSetup()">
+          🎨 自訂色彩與目的地
         </button>
-        <button class="btn btn-secondary" onclick="openColorSetup()">
-          ⚙️ 自訂色彩與人數設定
+        <button id="btn-go-players" class="btn btn-secondary" onclick="openPlayerSetup()">
+          🎴 多人輪流抽卡（保證不重複）
         </button>
       </div>
 
@@ -862,27 +869,21 @@
       <div style="margin-top: 15px; width: 100%;">
         <div class="glass-panel" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; text-align: left; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
           <h4 style="font-size: 0.9rem; font-weight: 800; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 8px;">
-            📖 Color Walk 玩法說明
+            📖 Color Walk 怎麼玩？
           </h4>
           <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.8rem; line-height: 1.6; color: var(--text-muted);">
-            <div style="display: flex; gap: 10px;">
-              <span style="color: #3b82f6; font-weight: 900; font-size: 0.85rem; min-width: 14px;">1</span>
-              <div><strong>設定人數與色彩</strong>：自訂目的地與玩家姓名，並可自由調配專屬色票。</div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-              <span style="color: #ec4899; font-weight: 900; font-size: 0.85rem; min-width: 14px;">2</span>
-              <div><strong>抽取專屬色彩</strong>：玩家輪流抽取神秘卡牌，保證每人獲得不同色彩。</div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-              <span style="color: #10b981; font-weight: 900; font-size: 0.85rem; min-width: 14px;">3</span>
-              <div><strong>街頭尋寶挑戰</strong>：在接下來的旅遊行程中，尋找並拍攝符合你抽中色彩的任何街景、小物。</div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-              <span style="color: #f59e0b; font-weight: 900; font-size: 0.85rem; min-width: 14px;">4</span>
-              <div><strong>分享旅行調色盤</strong>：返程後，將大家的照片合力拼圖，匯集成你們獨一無二的旅行回憶！</div>
-            </div>
+            <p>1. <strong>抽取專屬色彩</strong>：每個人輪流抽牌，得到自己的專屬旅行色彩。</p>
+            <p>2. <strong>開啟街頭挑戰</strong>：在接下來的旅遊行程中，尋找並拍攝含有你抽中顏色的風景、招牌或小物。</p>
+            <p>3. <strong>拼圖分享</strong>：旅行結束後，將大家的照片拼在一起，做成一張色彩斑斕的旅行調色盤！</p>
           </div>
         </div>
+      </div>
+
+      <!-- 累計遊玩人次標籤 -->
+      <div style="text-align: center; margin-top: 10px; width: 100%;">
+        <span id="visitor-count-badge" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); font-size: 0.72rem; color: #ff9500; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.15); letter-spacing: 0.5px; margin: 0 auto;">
+          🔥 全球累計遊玩：-- 次
+        </span>
       </div>
     </div>
 
@@ -1073,10 +1074,16 @@
 
 
     function openColorSetup() {
-      showScreen('setup');
-      // 自動展開自訂色票，並收折玩家暱稱編輯
-      document.getElementById('details-player-names').open = false;
+      if (isWheelSpinning) return;
+      showScreen('setup-colors');
       document.getElementById('details-color-setup').open = true;
+    }
+
+    function openPlayerSetup() {
+      if (isWheelSpinning) return;
+      showScreen('setup-players');
+      document.getElementById('details-player-names').open = true;
+      validateSettings();
     }
 
     function updateVisitorCount() {
@@ -1216,21 +1223,57 @@
       
       for (let i = 0; i < playerCount; i++) {
         const div = document.createElement('div');
-        div.className = 'input-group';
+        div.style.position = 'relative';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.width = '100%';
+        div.style.marginBottom = '8px';
         
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'text-input';
-        input.style.padding = '10px';
-        input.value = playerNames[i] || `玩家 ${i + 1}`;
-        input.placeholder = `玩家 ${i + 1} 名字`;
+        input.style.padding = '10px 36px 10px 10px';
+        input.style.width = '100%';
+        input.value = playerNames[i] || ''; // 允許空字串
+        input.placeholder = `玩家 ${i + 1} 暱稱`;
         
-        input.onchange = function() {
-          playerNames[i] = input.value.trim() || `玩家 ${i + 1}`;
+        // 確保初始無值時，補上預設值（但允許使用者清空）
+        if (!playerNames[i]) {
+          playerNames[i] = `玩家 ${i + 1}`;
+          input.value = `玩家 ${i + 1}`;
+        }
+
+        const clearBtn = document.createElement('span');
+        clearBtn.innerText = '✕';
+        clearBtn.style.position = 'absolute';
+        clearBtn.style.right = '12px';
+        clearBtn.style.top = '50%';
+        clearBtn.style.transform = 'translateY(-50%)';
+        clearBtn.style.color = 'var(--text-muted)';
+        clearBtn.style.cursor = 'pointer';
+        clearBtn.style.padding = '4px';
+        clearBtn.style.fontSize = '1.1rem';
+        clearBtn.style.userSelect = 'none';
+        clearBtn.style.display = input.value.trim() ? 'inline' : 'none';
+        
+        input.oninput = function() {
+          clearBtn.style.display = input.value.trim() ? 'inline' : 'none';
+          playerNames[i] = input.value.trim();
+          validateSettings();
           saveSettings();
         };
 
+        clearBtn.onclick = function() {
+          input.value = '';
+          clearBtn.style.display = 'none';
+          playerNames[i] = '';
+          validateSettings();
+          saveSettings();
+          input.focus();
+        };
+
         div.appendChild(input);
+        div.appendChild(clearBtn);
         container.appendChild(div);
       }
     }
@@ -1239,6 +1282,8 @@
       const container = document.getElementById('color-pills-wrapper');
       container.innerHTML = '';
       document.getElementById('color-pool-count').innerText = `${activeColors.length} 色`;
+
+      validateColorsSetup();
 
       activeColors.forEach((color, index) => {
         const pill = document.createElement('div');
@@ -1308,30 +1353,73 @@
       resetColorInputs();
     }
 
+    function validateColorsSetup() {
+      const warningEl = document.getElementById('color-setup-warning');
+      const btnSave = document.getElementById('btn-save-colors');
+      if (!warningEl || !btnSave) return;
+
+      if (activeColors.length === 0) {
+        warningEl.style.display = 'block';
+        btnSave.disabled = true;
+        btnSave.style.opacity = 0.5;
+        btnSave.style.cursor = 'not-allowed';
+      } else {
+        warningEl.style.display = 'none';
+        btnSave.disabled = false;
+        btnSave.style.opacity = 1;
+        btnSave.style.cursor = 'pointer';
+      }
+    }
+
     function validateSettings() {
       const warningEl = document.getElementById('warning-message');
       const btnStart = document.getElementById('btn-start-draw');
 
+      // 檢查色彩數量是否小於人數
       if (activeColors.length < playerCount) {
+        warningEl.innerHTML = `⚠️ 警告：當前色彩池只有 ${activeColors.length} 色，小於玩家人數 ${playerCount} 人，請先回首頁設定色彩！`;
         warningEl.style.display = 'block';
-        btnStart.disabled = true;
-        btnStart.style.opacity = 0.5;
-        btnStart.style.cursor = 'not-allowed';
+        if (btnStart) {
+          btnStart.disabled = true;
+          btnStart.style.opacity = 0.5;
+          btnStart.style.cursor = 'not-allowed';
+        }
         return false;
-      } else {
-        warningEl.style.display = 'none';
+      }
+
+      // 檢查玩家姓名是否包含空字串
+      const hasEmptyName = playerNames.slice(0, playerCount).some(name => !name || !name.trim());
+      if (hasEmptyName) {
+        warningEl.innerHTML = `⚠️ 警告：請填寫所有玩家的暱稱！`;
+        warningEl.style.display = 'block';
+        if (btnStart) {
+          btnStart.disabled = true;
+          btnStart.style.opacity = 0.5;
+          btnStart.style.cursor = 'not-allowed';
+        }
+        return false;
+      }
+
+      // 通過驗證
+      warningEl.style.display = 'none';
+      if (btnStart) {
         btnStart.disabled = false;
         btnStart.style.opacity = 1;
         btnStart.style.cursor = 'pointer';
-        return true;
       }
+      return true;
     }
 
     // --- 7. 不重複抽卡模式邏輯 ---
     function startCardGameMode() {
       if (!validateSettings()) {
-        alert('⚠️ 抽籤色彩池的顏色數量小於玩家人數，請先增加顏色或減少人數！');
-        openColorSetup();
+        const hasEmptyName = playerNames.slice(0, playerCount).some(name => !name || !name.trim());
+        if (hasEmptyName) {
+          alert('⚠️ 請先填寫所有玩家的暱稱！');
+        } else {
+          alert('⚠️ 抽籤色彩池的顏色數量小於玩家人數，請回首頁進入「自訂色彩」增加顏色！');
+          startWheelMode();
+        }
         return;
       }
       saveSettings();
@@ -1502,10 +1590,22 @@
       const canvas = document.getElementById('wheel-canvas');
       const ctx = canvas.getContext('2d');
       const segments = activeColors.length;
-      const arc = (Math.PI * 2) / segments;
       const radius = canvas.width / 2;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (segments === 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '16px Noto Sans TC';
+        ctx.textAlign = 'center';
+        ctx.fillText('請先自訂色彩', radius, radius - 10);
+        ctx.fillText('新增顏色！', radius, radius + 15);
+        ctx.restore();
+        return;
+      }
+
+      const arc = (Math.PI * 2) / segments;
       ctx.save();
       ctx.translate(radius, radius);
       ctx.rotate(angleOffset);
@@ -1539,6 +1639,19 @@
 
     function spinWheel() {
       if (isWheelSpinning) return;
+
+      const segments = activeColors.length;
+      if (segments === 0) {
+        alert('⚠️ 當前色彩池中沒有任何顏色！請先點選「自訂色彩與目的地」新增色彩。');
+        openColorSetup();
+        return;
+      }
+
+      // 同步解鎖 AudioContext
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
       isWheelSpinning = true;
 
       const spinBtn = document.getElementById('btn-spin');
@@ -1547,7 +1660,19 @@
         spinBtn.style.cursor = 'not-allowed';
       }
 
-      const segments = activeColors.length;
+      const goColorsBtn = document.getElementById('btn-go-colors');
+      const goPlayersBtn = document.getElementById('btn-go-players');
+      if (goColorsBtn) {
+        goColorsBtn.disabled = true;
+        goColorsBtn.style.opacity = 0.5;
+        goColorsBtn.style.cursor = 'not-allowed';
+      }
+      if (goPlayersBtn) {
+        goPlayersBtn.disabled = true;
+        goPlayersBtn.style.opacity = 0.5;
+        goPlayersBtn.style.cursor = 'not-allowed';
+      }
+
       const arcSize = 360 / segments;
       const spins = 5 + Math.floor(Math.random() * 5); 
       const targetDegree = spins * 360 + Math.floor(Math.random() * 360);
@@ -1578,6 +1703,16 @@
           if (spinBtn) {
             spinBtn.style.opacity = 1;
             spinBtn.style.cursor = 'pointer';
+          }
+          if (goColorsBtn) {
+            goColorsBtn.disabled = false;
+            goColorsBtn.style.opacity = 1;
+            goColorsBtn.style.cursor = 'pointer';
+          }
+          if (goPlayersBtn) {
+            goPlayersBtn.disabled = false;
+            goPlayersBtn.style.opacity = 1;
+            goPlayersBtn.style.cursor = 'pointer';
           }
           const actualAngle = (currentAngleDegree) % 360;
           // 計算上方指針處（270度）對應的獲獎索引
